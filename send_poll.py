@@ -20,14 +20,14 @@ Return ONLY a valid JSON object with this exact structure (no markdown, no extra
   "question": "[{subject}] The question text here",
   "options": ["Option A text", "Option B text", "Option C text", "Option D text"],
   "correct_option_id": 0,
-  "explanation": "Brief explanation of why this answer is correct (1-2 sentences)"
+  "explanation": "One short sentence explaining the answer."
 }}
 
-Rules:
-- Question must be genuinely challenging, JEE Main/Advanced standard
-- Question text must be under 300 characters total (including the subject tag)
-- Each option must be under 100 characters
-- correct_option_id is 0-indexed (0, 1, 2, or 3)
+STRICT limits (Telegram API hard limits — do not exceed):
+- question: max 250 characters total (including the subject tag)
+- Each option: max 90 characters
+- explanation: max 180 characters (must be ONE sentence)
+- correct_option_id: integer 0, 1, 2, or 3
 - Vary the correct answer position, don't always use 0
 - Return ONLY the JSON object, nothing else"""
 
@@ -50,9 +50,15 @@ if raw.startswith("```"):
 
 data = json.loads(raw)
 
+# Safety truncation to respect Telegram limits
+data["question"] = data["question"][:300]
+data["options"] = [opt[:100] for opt in data["options"]]
+data["explanation"] = data["explanation"][:200]
+
 print(f"Question: {data['question']}")
 print(f"Options: {data['options']}")
 print(f"Correct: {data['correct_option_id']}")
+print(f"Explanation length: {len(data['explanation'])} chars")
 
 url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendPoll"
 payload = {
